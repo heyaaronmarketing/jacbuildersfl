@@ -1,0 +1,220 @@
+.toc-table {
+    background: #f8f8f8;
+    padding: 15px 20px;
+    border-radius: 15px;
+}
+
+.toc-table>div {
+    border: 0 !important;
+}
+
+.toc-table>div .elementor-toc__header {
+    padding: 0 0 10px;
+    border: 0;
+}
+
+
+
+.toc-table>div ul.elementor-toc__list-wrapper {
+    list-style: none !important;
+    padding-left: 20px;
+    border-left: 1px solid #ddd;
+}
+
+.toc-table>div ul.elementor-toc__list-wrapper .elementor-toc__list-item-text-wrapper>svg {
+    display: none;
+}
+
+.toc-table>div ul.elementor-toc__list-wrapper>li {
+    margin: 0 0 10px;
+}
+
+.toc-table>div ul.elementor-toc__list-wrapper>li a.elementor-toc__list-item-text {
+    font-size: 16px;
+    line-height: 25px;
+    text-decoration: none;
+}
+
+a.elementor-toc__list-item-text.elementor-toc__top-level:hover {
+    color: #D9BB71B3;
+}
+
+/* 04/may */
+
+@media (max-width: 1199px) {
+   .elementor-element.elementor-element-911f344 nav ul.elementor-nav-menu li a {
+    font-size: 15px !important;
+}
+	
+}
+
+
+
+  section.process-section .container {
+    max-width: 979px;
+    margin: 0 auto;
+  }
+
+  .phase-row {
+    padding: 0 0 60px;
+    position: relative;
+  }
+
+  .phase-row .phase-line {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 100%;
+    background: #031231;
+    top: 25px;
+  }
+
+  .phase-row .phase-icon {
+    width: 43px;
+    height: 43px;
+    margin-top: 25px;
+    background: #d9bb71;
+    border-radius: 999px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .phase-row .phase-icon .eael-date {
+    white-space: nowrap;
+    color: #000000;
+    font-family: inherit;
+    font-weight: 600;
+  }
+
+  .phase-row.odd .eael-date {
+    left: calc(100% + 20px);
+    top: 0;
+  }
+
+  .phase-row .eael-date {
+    position: absolute;
+  }
+  .phase-row .phase-icon .phase-picture img {
+    width: 23px;
+    transform: rotate(180deg);
+    position: relative;
+    top: 2px;
+  }
+
+  .phase-row.even .phase-icon span.eael-date {
+    right: calc(100% + 20px);
+  }
+
+  .phase-row .phase-content {
+    background: #d9bb71;
+    padding: 35px;
+    max-width: 440px;
+    box-sizing: border-box;
+    position: relative;
+  }
+
+  .phase-row .phase-content h2 {
+    margin: 0 0 16px;
+  }
+
+  .phase-row .phase-content h2 a {
+    font-family: "Poppins", Sans-serif;
+    font-size: 17px;
+    font-family: "Poppins", Sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    font-family: inherit;
+    color: #000;
+    text-decoration: none;
+  }
+
+  .phase-row .phase-content ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .phase-row .phase-content ul p {
+    margin: 0;
+  }
+
+  .phase-row .phase-content ul li:not(:last-child) {
+    padding: 0 0 20px;
+    margin: 0 0 10px;
+  }
+
+  .phase-row .phase-content:after {
+    content: "";
+    position: absolute;
+    top: 38px;
+    right: 100%;
+    height: 0;
+    width: 0;
+    border: 7px solid rgba(0, 0, 0, 0);
+    border-right: 7px solid #fff;
+  }
+
+  .phase-row.even .phase-content {
+    margin-left: auto;
+  }
+
+  .phase-row.odd .phase-content::after {
+    left: 100%;
+    border-left-color: #d9bb71;
+  }
+
+  .phase-row:last-child .phase-line {
+    display: none;
+  }
+
+  .phase-row.even .phase-content::after {
+    right: 100%;
+    border-right-color: #d9bb71;
+  }
+ @media(min-width:992px){
+  .phase-row.even .phase-content {
+    text-align: right;
+}
+ }
+
+  @media(max-width:991px){
+.phase-row .phase-icon .eael-date {
+    display: none;
+}
+.phase-row .phase-icon {
+    transform: none;
+    left: 0;
+}
+.phase-row .phase-line {
+    transform: none;
+    left: 20px;
+}
+.phase-row .phase-content {
+    margin-right: auto;
+    margin-left: 0 !important;
+}
+.phase-row .phase-content {
+    margin-right: auto;
+    margin-left: 0 !important;
+    max-width: 100%;
+}
+.phase-row {
+    padding: 0 0 30px 60px;
+ }
+ .phase-row.odd .phase-content::after {
+    left: 100%;
+    border-left-color: transparent;
+    border-right-color: #d9bb71;
+    left: unset;
+    right: 100%;
+}
+  }
+
+body.page-id-6489 header#site-header {
+    display: none !important;
+}

@@ -1,0 +1,125 @@
+.popup-form-new .elementor-form-fields-wrapper>div input:hover, .popup-form-new .elementor-form-fields-wrapper>div textarea:hover, .popup-form-new .elementor-form-fields-wrapper>div input:focus, .popup-form-new .elementor-form-fields-wrapper>div textarea:focus {
+    box-shadow: 0 0 10px 0 #D9BB71;
+}
+
+.popup-form-new .elementor-form-fields-wrapper>div input {
+	padding: 15px 10px !important;
+}
+.popup-form-new .elementor-form-fields-wrapper>div textarea {
+	padding: 10px 20px !important;
+}
+.popup-form-new .elementor-field-subgroup span.elementor-field-option {
+    display: flex;
+    align-items: flex-start;
+    column-gap: 16px;
+}
+.popup-form-new .elementor-field-subgroup span.elementor-field-option label {
+    line-height: 1.9 !important;
+}
+.popup-form-new .elementor-field-subgroup span.elementor-field-option input {
+    position: relative;
+    top: 7px;
+}
+.popup-form-new .elementor-field-subgroup span.elementor-field-option label a {
+    color: #1090D4;
+}
+.popup-form-new button.elementor-button:hover:after {
+    transform: translateY(-57%);
+}
+.popup-form-new button.elementor-button:hover {
+    background: #000 !important;
+}
+
+.shaky-cta-btn a.elementor-button span.elementor-button-icon svg {
+    animation: jump-shaking 1.83s infinite;
+    height: 24px !important;
+    width: 100%;
+}
+
+
+.btn-hover-effect a:after , .free_roof_form button.elementor-button:after , .form-booking .elementor-form-fields-wrapper>div.e-form__buttons button:after , a.bdt-slide-btn:after {
+    content: "";
+    display: inline-block;
+    transform: translateY(50%);
+    left: 0;
+    position: absolute;
+    width: 100%;
+    height: 180px;
+    border-radius: 50%;
+    background-color: #000;
+    z-index: 0;
+    transition: transform ease 1s;
+}
+
+.btn-hover-effect a:hover:after , .free_roof_form button.elementor-button:hover:after , .form-booking .elementor-form-fields-wrapper>div.e-form__buttons button:hover:after , a.bdt-slide-btn:hover:after {
+    transform: translateY(-57%);
+}
+
+.btn-hover-effect a:hover , .free_roof_form button.elementor-button:hover , .form-booking .elementor-form-fields-wrapper>div.e-form__buttons button:hover , a.bdt-slide-btn:hover {
+    background: #D9BB71 !important;
+}
+
+.btn-hover-effect a span.elementor-button-content-wrapper , .free_roof_form button.elementor-button span.elementor-button-content-wrapper, .form-booking .elementor-form-fields-wrapper>div.e-form__buttons button>span  {position: relative !important;z-index: 1 !important;}
+
+/* Shaking Animation */
+
+.shake-button {
+   animation: jump-shaking 2.83s infinite;
+}
+
+.shake-button:hover,
+.shake-button:active,
+.shake-button:focus {
+  animation: none;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+
+.overlay-container .bdt-main-title h1 img {
+    width: 100%;
+    max-width: 10%;
+}
+.overlay-container h1.bdt-title-tag {
+    display: flex !important;
+}
+li.menu-open {
+    cursor: pointer;
+}
+
+/* Basic Sticky Header Styles */
+.fusion-header-wrapper {
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Class added when header should be visible (scrolling up) */
+.fusion-header-wrapper.fusion-is-sticky {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* Class added when header should be hidden (scrolling down) */
+.fusion-header-wrapper.fusion-sticky-hidden {
+    transform: translateY(-100%);
+    opacity: 0;
+}
+
+/* Reset at top of page */
+.fusion-header-wrapper:not(.fusion-is-sticky):not(.fusion-sticky-hidden) {
+    position: relative;
+    transform: none;
+}
+
+.postid-3939 .elementor.elementor-11.elementor-location-header, .postid-3939 .elementor.elementor-15.elementor-location-footer {
+    display: none !important;
+}

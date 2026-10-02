@@ -1,0 +1,4 @@
+.assetsignore
+*.orig.mp4
+*.orig.mov
+*.orig.webm

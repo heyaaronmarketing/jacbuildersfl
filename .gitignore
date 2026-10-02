@@ -1,0 +1,6 @@
+.DS_Store
+__pycache__/
+*.pyc
+crawl.log
+# pre-transcode originals kept locally for re-encodes (see video.py)
+*.orig.mp4
