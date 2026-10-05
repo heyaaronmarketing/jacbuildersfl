@@ -15,8 +15,13 @@ python3 crawl.py      # BFS from Yoast page/post/locations sitemaps + home
 python3 rewrite.py    # absolute jacbuildersfl.com URLs -> root-relative
 python3 chunks.py     # Elementor lazy-loaded webpack bundles (not in HTML)
 python3 video.py      # transcode any asset over Cloudflare's 25 MiB file cap
-python3 scaffold.py   # robots.txt, sitemap.xml, _headers, 404.html, ignores
+python3 scaffold.py   # robots.txt, sitemaps, _headers, 404.html, ignores
+python3 recaptcha.py  # strip the domain-locked reCAPTCHA widget (AFTER scaffold)
+python3 verify.py     # gate: every root-relative reference must resolve
 ```
+
+`recaptcha.py` runs after `scaffold.py` on purpose — scaffold fetches a fresh
+404 page from the live site, which arrives with the widget still in it.
 
 Local preview: `python3 -m http.server 8793 --directory site`
 (also available as the `jac-static` launch config).
@@ -37,6 +42,15 @@ Local preview: `python3 -m http.server 8793 --directory site`
   untouched original out of git via `.gitignore` (`*.orig.mp4`).
 - Because the assets directory is `site/` (not the repo root), Cloudflare's
   uploader never walks `.git/`, so there is no oversized-pack failure mode.
+
+## The one deliberate deviation from as-is
+
+Elementor's reCAPTCHA v3 widget is stripped (`recaptcha.py`). Its site key is
+registered against jacbuildersfl.com, so on any other host — the workers.dev
+preview included — Google renders "ERROR for site owner: Invalid domain for
+site" in place of the badge. It is safe to drop because reCAPTCHA v3 only
+scored submissions to /wp-admin/admin-ajax.php, which does not survive the
+migration. Rebuilding bot protection is part of rewiring the forms.
 
 ## Deliberately left as-is
 
