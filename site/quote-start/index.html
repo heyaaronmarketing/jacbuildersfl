@@ -197,13 +197,29 @@
     .split(" ");
 
   function parseAddress(text) {
-    var s = text.replace(/\s+/g, " ").trim();
+    var s = String(text)
+      .replace(/[\u00a0\u202f\u2007]/g, " ")   // non-breaking spaces paste in constantly
+      .replace(/\s*,\s*/g, ", ")                // normalise comma spacing
+      .replace(/,\s*(?=,)/g, "")                // collapse doubled commas
+      .replace(/[.,\s]+$/, "")                  // trailing punctuation/space
+      .replace(/\s+/g, " ")
+      .trim();
+    // "..., FL. 33602" -> "..., FL 33602"
+    s = s.replace(/\b([A-Za-z]{2})\.\s+(\d{5})/, "$1 $2");
     // "123 Main St, Tampa, FL 33606"  /  "123 Main St Tampa FL 33606"
     var m = s.match(/^(.*?)[,\s]+([A-Za-z .'-]+?)[,\s]+([A-Za-z]{2})[,\s]+(\d{5}(?:-\d{4})?)$/);
     if (!m) return null;
     var st = m[3].toUpperCase();
     if (STATES.indexOf(st) === -1) return null;
-    return { street: m[1].replace(/,$/, "").trim(), city: m[2].trim(), state: st, zip: m[4] };
+    var street = m[1].replace(/,$/, "").trim();
+    var city = m[2].trim();
+    // Without commas the split lands in the wrong place — "400 N Tampa St Tampa
+    // FL 33602" parses as street "400", city "N Tampa St Tampa". A city holding
+    // a street suffix, or a street with no number, means we guessed. Return
+    // null so the geocoder gets a go instead of a confidently wrong answer.
+    if (/\b(st|street|ave|avenue|blvd|boulevard|rd|road|dr|drive|ln|lane|ct|court|way|pkwy|parkway|hwy|highway|cir|circle|ter|terrace|pl|place)\b\.?/i.test(city)) return null;
+    if (!/\d/.test(street)) return null;
+    return { street: street, city: city, state: st, zip: m[4] };
   }
 
   function trySplit() {
@@ -321,8 +337,9 @@
     $("slugstate").innerHTML = s
       ? '<span style="color:#5CB85C">Slug set: <b>' + esc(s) + "</b></span>" +
         (slugFromWorker && s === slugFromWorker ? " (from the Worker)" : " (this browser only)")
-      : '<span class="warn">No slug yet &mdash; the hand-off is disabled.</span> ' +
-        "Without it we'd be sending real addresses to Roofle's demo account.";
+      : '<span class="warn">No slug yet.</span> ' +
+        "The form still captures and logs; the hand-off shows a demo link instead " +
+        "of going to JAC's own instance.";
   }
 
   /* ---- deeplink ----------------------------------------------------------- */
@@ -410,6 +427,24 @@
       preview();
     });
   });
+
+  /* ---- geocoder fallback ---------------------------------------------------
+     Parsing a free-text address with a regex only ever half works — a trailing
+     space, a missing comma or "Fl." and it returns nothing. The lookup service
+     already hands back proper components, so ask it rather than guess. */
+  function resolveViaLookup(text) {
+    return fetch("/api/geo/suggest?q=" + encodeURIComponent(text))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var hit = (d.suggestions || [])[0];
+        if (!hit) return null;
+        markResolved(hit);
+        $("street").value = hit.street1;
+        lastQ = hit.street1;
+        return hit;
+      })
+      .catch(function () { return null; });
+  }
 
   /* ---- submit -------------------------------------------------------------- */
   function fail(msg) {
