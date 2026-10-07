@@ -1,11 +1,24 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "jacbuildersfl",
+  "main": "worker/index.js",
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./site",
+    "binding": "ASSETS",
     "not_found_handling": "404-page",
     "html_handling": "auto-trailing-slash"
   },
+  // Deliveries persist here once the database exists. Left commented so the
+  // Worker deploys before anything is provisioned — the code treats DB as
+  // optional and falls back to an ephemeral in-isolate buffer. Create it with
+  // `npx wrangler d1 create jacbuildersfl`, paste the id, uncomment, push.
+  // "d1_databases": [
+  //   {
+  //     "binding": "DB",
+  //     "database_name": "jacbuildersfl",
+  //     "database_id": "PASTE-ID-HERE"
+  //   }
+  // ],
   "observability": { "enabled": true }
 }
