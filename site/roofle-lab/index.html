@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roofle Webhook Lab | JAC Builders</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+  :root{
+    --bg:#0e1013; --panel:#16191e; --panel2:#1d2127; --line:#2a2f37;
+    --ink:#e8ebef; --dim:#8d96a3; --gold:#D9BB71; --ok:#5CB85C; --warn:#F0AD4E; --bad:#D9534F;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  a{color:var(--gold)}
+  code,pre,.mono{font-family:var(--mono)}
+  .wrap{max-width:1040px;margin:0 auto;padding:28px 20px 70px}
+  h1{font-size:1.5rem;margin:0 0 4px}
+  h2{font-size:1rem;margin:0 0 12px;letter-spacing:.02em}
+  .sub{color:var(--dim);margin:0 0 26px;font-size:.92rem}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+         padding:18px;margin-bottom:18px}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .grow{flex:1 1 320px;min-width:0}
+  input,textarea,button{font:inherit}
+  input[type=text],input[type=password],textarea{
+    width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    color:var(--ink);padding:10px 12px;font-family:var(--mono);font-size:.86rem}
+  textarea{min-height:150px;resize:vertical;line-height:1.5}
+  button{background:var(--gold);color:#17191d;border:0;border-radius:8px;padding:10px 16px;
+         font-weight:700;cursor:pointer;white-space:nowrap}
+  button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  button.ghost:hover{border-color:var(--gold);color:var(--gold)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .url{display:flex;gap:8px;align-items:center}
+  .url input{font-size:.9rem}
+  .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  .pill{font-size:.75rem;font-family:var(--mono);padding:4px 10px;border-radius:999px;
+        border:1px solid var(--line);color:var(--dim)}
+  .pill b{font-weight:700}
+  .pill.ok{color:var(--ok);border-color:#2c4a2f}
+  .pill.warn{color:var(--warn);border-color:#50411f}
+  .pill.bad{color:var(--bad);border-color:#50262a}
+  .note{font-size:.85rem;color:var(--dim);margin:10px 0 0}
+  .note strong{color:var(--ink)}
+  .ev{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;background:var(--panel2);
+      overflow:hidden}
+  .ev summary{cursor:pointer;list-style:none;padding:12px 14px;display:flex;gap:12px;
+              align-items:center;flex-wrap:wrap}
+  .ev summary::-webkit-details-marker{display:none}
+  .ev__t{font-family:var(--mono);font-size:.78rem;color:var(--dim)}
+  .ev__n{font-weight:700;font-size:.9rem}
+  .ev__v{margin-left:auto;font-size:.72rem;font-family:var(--mono)}
+  .ev pre{margin:0;padding:14px;background:#101317;border-top:1px solid var(--line);
+          overflow-x:auto;font-size:.8rem;line-height:1.55;color:#cfd6de}
+  .empty{color:var(--dim);font-size:.9rem;padding:18px 0;text-align:center}
+  .setup{border-left:3px solid var(--warn);padding-left:14px}
+  .setup pre{background:#101317;border:1px solid var(--line);border-radius:8px;padding:12px;
+             overflow-x:auto;font-size:.8rem;margin:10px 0}
+  .live{display:inline-flex;align-items:center;gap:7px;font-size:.8rem;color:var(--dim)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+  .dot.on{background:var(--ok)}
+  .err{color:var(--bad);font-size:.85rem;margin-top:10px}
+</style>
+<script>(function(){var m;try{m=localStorage.getItem("jacUxMode")}catch(e){}if(m!=="before"){document.documentElement.className+=" tighten-on"}})();</script>
+<link rel="stylesheet" href="/assets/tighten.css?v=1">
+</head>
+<body>
+<div class="wrap">
+  <h1>Roofle webhook lab</h1>
+  <p class="sub">Inspect what Roofle actually posts to us. Nothing here is public &mdash;
+     reads require the lab token.</p>
+
+  <div class="panel">
+    <h2>Callback URL</h2>
+    <div class="url">
+      <input type="text" id="cb" readonly class="grow">
+      <button class="ghost" id="copy">Copy</button>
+    </div>
+    <p class="note">Paste this into Roofle's webhook / callback field. A <code>GET</code>
+       returns 200 so their URL check passes; real deliveries are <code>POST</code>.</p>
+    <div class="pills" id="pills"></div>
+  </div>
+
+  <div class="panel" id="setup" hidden>
+    <h2>Finish setup</h2>
+    <div class="setup">
+      <p class="note"><strong>Reads are closed until a lab token exists.</strong>
+         Deliveries carry homeowner names, phones and addresses, and this repo is public,
+         so the token has to be a Worker secret &mdash; never a committed var.</p>
+      <pre>npx wrangler secret put ROOFLE_LAB_TOKEN --name jacbuildersfl
+npx wrangler secret put ROOFLE_WEBHOOK_SECRET --name jacbuildersfl</pre>
+      <p class="note">The second one is optional: set it if Roofle lets you send a shared
+         secret, and deliveries carrying it get marked verified.
+         Storage is an ephemeral in-isolate buffer until a D1 database is bound &mdash;
+         see <code>ROOFLE.md</code> for the one command that fixes that.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Lab token</h2>
+    <div class="row">
+      <input type="password" id="tok" class="grow" placeholder="value of ROOFLE_LAB_TOKEN" autocomplete="off">
+      <button id="save">Unlock</button>
+      <button class="ghost" id="forget">Forget</button>
+    </div>
+    <p class="note">Kept in this tab's <code>sessionStorage</code> only.</p>
+    <div class="err" id="autherr" hidden></div>
+  </div>
+
+  <div class="panel">
+    <h2>Send a test delivery</h2>
+    <p class="note" style="margin:0 0 10px">
+      <strong>This shape is a placeholder, not Roofle's documented payload</strong> &mdash;
+      they don't publish one. It exists so you can exercise the plumbing before Roofle is
+      wired up. Once a real delivery lands below, copy its actual shape from the log.</p>
+    <textarea id="body" spellcheck="false"></textarea>
+    <div class="row" style="margin-top:10px">
+      <button id="send">Send test</button>
+      <button class="ghost" id="real">Send as real POST to the callback</button>
+    </div>
+    <p class="note">&ldquo;Send test&rdquo; writes straight to the log. The second button
+       posts to the public callback exactly as Roofle would, so you also exercise
+       signature checking and the 200-first path.</p>
+  </div>
+
+  <div class="panel">
+    <div class="row" style="margin-bottom:12px">
+      <h2 style="margin:0">Deliveries</h2>
+      <span class="live" style="margin-left:auto">
+        <span class="dot" id="dot"></span><span id="livetxt">idle</span>
+      </span>
+      <button class="ghost" id="refresh">Refresh</button>
+      <button class="ghost" id="clear">Clear log</button>
+    </div>
+    <div id="list"><p class="empty">Unlock with the lab token to see deliveries.</p></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var ORIGIN = location.origin;
+  var CALLBACK = ORIGIN + "/api/roofle/webhook";
+  var timer = null;
+
+  $("cb").value = CALLBACK;
+  $("body").value = JSON.stringify({
+    event: "lead.created",
+    lead: {
+      firstName: "Test", lastName: "Homeowner",
+      email: "test@example.com", phone: "813-555-0142",
+      address: "123 Bayshore Blvd, Tampa, FL 33606"
+    },
+    quote: { total: 18450, currency: "USD", product: "Owens Corning Duration" },
+    source: "roofle-lab"
+  }, null, 2);
+
+  $("copy").addEventListener("click", function () {
+    navigator.clipboard.writeText(CALLBACK).then(function () {
+      $("copy").textContent = "Copied";
+      setTimeout(function () { $("copy").textContent = "Copy"; }, 1400);
+    });
+  });
+
+  /* ---- token ------------------------------------------------------------ */
+  function token() { try { return sessionStorage.getItem("roofleLabToken") || ""; } catch (e) { return ""; } }
+  function setToken(v) { try { v ? sessionStorage.setItem("roofleLabToken", v) : sessionStorage.removeItem("roofleLabToken"); } catch (e) {} }
+
+  $("tok").value = token();
+  $("save").addEventListener("click", function () { setToken($("tok").value.trim()); load(); });
+  $("forget").addEventListener("click", function () { setToken(""); $("tok").value = ""; stop(); render(null, "Token cleared."); });
+
+  function headers() {
+    var h = { "Content-Type": "application/json" };
+    if (token()) h["x-lab-token"] = token();
+    return h;
+  }
+
+  /* ---- health ----------------------------------------------------------- */
+  function health() {
+    fetch(ORIGIN + "/api/health").then(function (r) { return r.json(); }).then(function (d) {
+      var p = [];
+      p.push(pill(d.storage && d.storage.indexOf("d1") === 0 ? "ok" : "warn",
+                  "storage", d.storage));
+      p.push(pill(d.labTokenConfigured ? "ok" : "bad",
+                  "ROOFLE_LAB_TOKEN", d.labTokenConfigured ? "set" : "not set"));
+      p.push(pill(d.webhookSecretConfigured ? "ok" : "warn",
+                  "ROOFLE_WEBHOOK_SECRET", d.webhookSecretConfigured ? "set" : "not set"));
+      $("pills").innerHTML = p.join("");
+      $("setup").hidden = !!d.labTokenConfigured;
+    }).catch(function () {});
+  }
+  function pill(cls, k, v) {
+    return '<span class="pill ' + cls + '"><b>' + esc(k) + '</b> ' + esc(String(v)) + "</span>";
+  }
+
+  /* ---- sending ---------------------------------------------------------- */
+  function parseBody() {
+    try { return JSON.parse($("body").value); }
+    catch (e) { alert("That isn't valid JSON:\n\n" + e.message); return null; }
+  }
+  $("send").addEventListener("click", function () {
+    var b = parseBody(); if (!b) return;
+    fetch(ORIGIN + "/api/roofle/test", { method: "POST", headers: headers(), body: JSON.stringify(b) })
+      .then(function () { load(); });
+  });
+  $("real").addEventListener("click", function () {
+    var b = parseBody(); if (!b) return;
+    // Deliberately no lab token: this is the unauthenticated path Roofle uses.
+    fetch(CALLBACK, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) })
+      .then(function () { setTimeout(load, 400); });
+  });
+  $("refresh").addEventListener("click", load);
+  $("clear").addEventListener("click", function () {
+    if (!confirm("Clear every recorded delivery?")) return;
+    fetch(ORIGIN + "/api/roofle/events", { method: "DELETE", headers: headers() }).then(load);
+  });
+
+  /* ---- polling ---------------------------------------------------------- */
+  function start() { if (!timer) { timer = setInterval(load, 5000); $("dot").className = "dot on"; $("livetxt").textContent = "live"; } }
+  function stop() { if (timer) { clearInterval(timer); timer = null; } $("dot").className = "dot"; $("livetxt").textContent = "idle"; }
+  document.addEventListener("visibilitychange", function () { document.hidden ? stop() : load(); });
+
+  function load() {
+    health();
+    if (!token()) { render(null, "Unlock with the lab token to see deliveries."); stop(); return; }
+    fetch(ORIGIN + "/api/roofle/events?limit=50", { headers: headers() })
+      .then(function (r) {
+        return r.json().then(function (d) { return { status: r.status, d: d }; });
+      })
+      .then(function (res) {
+        if (res.status === 401) { stop(); $("autherr").hidden = false; $("autherr").textContent = "That token was rejected."; render(null, "Locked."); return; }
+        if (res.status === 503) { stop(); render(null, "Worker has no ROOFLE_LAB_TOKEN set yet."); return; }
+        $("autherr").hidden = true;
+        start();
+        render(res.d);
+      })
+      .catch(function (e) { stop(); render(null, "Request failed: " + e.message); });
+  }
+
+  function render(data, msg) {
+    var el = $("list");
+    if (!data) { el.innerHTML = '<p class="empty">' + esc(msg || "") + "</p>"; return; }
+    var evs = data.events || [];
+    if (!evs.length) {
+      el.innerHTML = '<p class="empty">No deliveries yet. Send a test above, or trigger a real quote.</p>';
+      return;
+    }
+    el.innerHTML = evs.map(function (e) {
+      var v = e.verified
+        ? '<span style="color:var(--ok)">verified &middot; ' + esc(e.verifiedBy || "") + "</span>"
+        : '<span style="color:var(--warn)">unverified &middot; ' + esc(e.verifiedBy || "") + "</span>";
+      return '<details class="ev"><summary>' +
+        '<span class="ev__n">' + esc(e.event || "webhook") + "</span>" +
+        '<span class="ev__t">' + esc(e.at || "") + "</span>" +
+        '<span class="ev__v">' + v + "</span>" +
+        "</summary><pre>" + esc(JSON.stringify(e, null, 2)) + "</pre></details>";
+    }).join("");
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  load();
+})();
+</script>
+<script src="/assets/tighten.js?v=1" defer></script>
+</body>
+</html>
