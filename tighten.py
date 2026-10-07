@@ -37,6 +37,8 @@ BOOT = (
 CSS_TAG = f'<link rel="stylesheet" href="/assets/tighten.css?v={VER}">'
 JS_TAG = f'<script src="/assets/tighten.js?v={VER}" defer></script>'
 MARKER = "/assets/tighten.css"
+# Present on every mirrored WordPress page, on none of the hand-authored ones.
+ELEMENTOR_PAGE = "elementor/assets/js/frontend.min.js"
 VER_RE = re.compile(r'(/assets/tighten\.(?:css|js))\?v=\d+')
 
 CSS = """/* ==========================================================================
@@ -413,6 +415,14 @@ def main():
             p = os.path.join(root, fn)
             with open(p, encoding="utf-8") as f:
                 h = f.read()
+            # Only mirrored Elementor pages. Hand-authored pages (the Roofle
+            # lab, the instant-quote lander) have nothing for the overlay to
+            # fix, so the review toggle would just be clutter on them.
+            # Match Elementor's frontend bundle, not the bare word "elementor":
+            # hand-authored pages reference /uploads/elementor/ for fonts and
+            # would otherwise match too.
+            if ELEMENTOR_PAGE not in h:
+                continue
             if MARKER in h:
                 # Already injected — only keep the asset version current so
                 # Cloudflare's immutable cache picks up edited CSS/JS.
@@ -436,7 +446,7 @@ def main():
                 with open(p, "w", encoding="utf-8") as f:
                     f.write(h)
                 n += 1
-    print(f"Overlay assets written; injected into {n} pages (v{VER})")
+    print(f"Overlay assets written; injected into {n} Elementor pages (v{VER})")
 
 
 if __name__ == "__main__":
