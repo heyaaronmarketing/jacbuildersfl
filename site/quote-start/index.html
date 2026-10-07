@@ -435,15 +435,8 @@
   function resolveViaLookup(text) {
     return fetch("/api/geo/suggest?q=" + encodeURIComponent(text))
       .then(function (r) { return r.json(); })
-      .then(function (d) {
-        var hit = (d.suggestions || [])[0];
-        if (!hit) return null;
-        markResolved(hit);
-        $("street").value = hit.street1;
-        lastQ = hit.street1;
-        return hit;
-      })
-      .catch(function () { return null; });
+      .then(function (d) { return d.suggestions || []; })
+      .catch(function () { return []; });
   }
 
   /* ---- submit -------------------------------------------------------------- */
@@ -467,11 +460,16 @@
       // they have already done. Only if that misses do we show the fields.
       $("go").disabled = true;
       $("go").textContent = "Looking it up\u2026";
-      resolveViaLookup($("street").value.trim()).then(function (hit) {
+      resolveViaLookup($("street").value.trim()).then(function (hits) {
         $("go").disabled = false;
         $("go").textContent = "Start";
-        if (hit) {
-          $("f").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+        if (hits.length) {
+          // Offer them, never auto-pick. The top hit is not always the house
+          // that was typed — "1234 W Swann Ave" comes back as 2901 W Swann Ave
+          // — and silently swapping it would quote the wrong roof.
+          render(hits);
+          $("street").focus();
+          fail("Pick your address from the list so we measure the right roof.");
           return;
         }
         showManual();
