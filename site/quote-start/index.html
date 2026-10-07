@@ -50,7 +50,7 @@
   .ac__opt small{display:block;color:#6d747d;font-size:.8rem;margin-top:2px}
   .ac__opt[aria-selected="true"],.ac__opt:hover{background:var(--bg-alt)}
   .ac__status{padding:11px 12px;font-size:.88rem;color:#6d747d}
-  .parts{display:grid;grid-template-columns:1fr 92px 120px;gap:10px;margin-top:10px}
+  .parts{display:grid;grid-template-columns:1fr 92px 120px;gap:10px}
   @media (max-width:520px){.parts{grid-template-columns:1fr 1fr;}.parts .city{grid-column:1/-1}}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);
            white-space:nowrap}
@@ -58,6 +58,13 @@
   .err.on{display:block}
   input.bad{border-color:var(--bad)}
 
+  .oneline{display:flex;gap:10px;align-items:stretch}
+  .oneline .ac{flex:1 1 auto;min-width:0}
+  .oneline button{width:auto;flex:0 0 auto;margin:0;padding:0 30px}
+  @media (max-width:520px){
+    .oneline{flex-direction:column}
+    .oneline button{width:100%;padding:0}
+  }
   button{
     width:100%;margin-top:16px;min-height:56px;border:0;border-radius:10px;cursor:pointer;
     background:var(--gold);color:var(--ink);font:700 1.05rem/1 Poppins,system-ui,sans-serif;
@@ -99,28 +106,36 @@
 
     <form class="card" id="f" novalidate>
       <label for="street">Property address</label>
-      <div class="ac">
-        <input id="street" name="street" type="text" autocomplete="off"
-               placeholder="Start typing your address&hellip;" enterkeyhint="search" required
-               role="combobox" aria-expanded="false" aria-controls="ac-list"
-               aria-autocomplete="list" aria-describedby="street-hint">
-        <ul class="ac__list" id="ac-list" role="listbox" aria-label="Address suggestions" hidden></ul>
+      <div class="oneline">
+        <div class="ac">
+          <input id="street" name="street" type="text" autocomplete="off"
+                 placeholder="Enter your street address to see your price" required
+                 enterkeyhint="search" role="combobox" aria-expanded="false"
+                 aria-controls="ac-list" aria-autocomplete="list" aria-describedby="street-hint">
+          <ul class="ac__list" id="ac-list" role="listbox" aria-label="Address suggestions" hidden></ul>
+        </div>
+        <button type="submit" id="go">Start</button>
       </div>
-      <p class="hint" id="street-hint">Pick a suggestion, or paste a full address and
-         we'll split it for you.</p>
+      <p class="hint" id="street-hint">Pick your address from the list.</p>
       <p class="sr-only" id="ac-live" aria-live="polite"></p>
 
-      <div class="parts">
-        <input id="city" class="city" type="text" autocomplete="address-level2"
-               placeholder="City" aria-label="City" required>
-        <input id="state" type="text" autocomplete="address-level1" maxlength="2"
-               placeholder="FL" aria-label="State" required>
-        <input id="zip" type="text" inputmode="numeric" autocomplete="postal-code"
-               maxlength="10" placeholder="ZIP" aria-label="ZIP code" required>
+      <!-- Revealed only when the lookup can't resolve what was typed. Roofle
+           needs the parts separately and won't search without the ZIP, so
+           there has to be a manual way through — just not in everyone's face. -->
+      <div id="manual" hidden>
+        <p class="hint" style="margin:14px 0 8px;color:var(--ink);font-weight:600">
+          We couldn't match that one &mdash; fill these in and we'll carry on.</p>
+        <div class="parts">
+          <input id="city" class="city" type="text" autocomplete="address-level2"
+                 placeholder="City" aria-label="City">
+          <input id="state" type="text" autocomplete="address-level1" maxlength="2"
+                 placeholder="FL" aria-label="State">
+          <input id="zip" type="text" inputmode="numeric" autocomplete="postal-code"
+                 maxlength="10" placeholder="ZIP" aria-label="ZIP code">
+        </div>
       </div>
 
       <p class="err" id="err"></p>
-      <button type="submit" id="go">See my roof price</button>
 
       <ul class="reassure">
         <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg> Free, no obligation</li>
@@ -174,10 +189,9 @@
     var parsed = parseAddress($("street").value);
     if (!parsed) return;
     $("street").value = parsed.street;
-    if (!$("city").value) $("city").value = parsed.city;
-    if (!$("state").value) $("state").value = parsed.state;
-    if (!$("zip").value) $("zip").value = parsed.zip;
-    preview();
+    lastQ = parsed.street;
+    markResolved({ street1: parsed.street, city: parsed.city,
+                   state: parsed.state, postalCode: parsed.zip });
   }
   $("street").addEventListener("paste", function () { setTimeout(trySplit, 0); });
 
@@ -206,7 +220,7 @@
 
   function render(suggestions) {
     items = suggestions;
-    if (!items.length) { renderStatus("No matches — type the address manually below."); return; }
+    if (!items.length) { renderStatus("No matches for that."); showManual(); return; }
     openList(items.map(function (s, i) {
       return '<li class="ac__opt" role="option" id="ac-opt-' + i + '" aria-selected="false">' +
              esc(s.street1) + "<small>" + esc(s.city + ", " + s.state + " " + s.postalCode) +
@@ -232,12 +246,9 @@
     var s = items[i];
     if (!s) return;
     $("street").value = s.street1;
-    $("city").value = s.city;
-    $("state").value = s.state;
-    $("zip").value = s.postalCode;
     lastQ = s.street1;
     closeList();
-    preview();
+    markResolved(s);
     $("go").focus();
   }
 
@@ -251,13 +262,14 @@
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (seq !== acSeq) return;            // a newer keystroke already won
-        if (d.error) { renderStatus("Lookup unavailable — fill the fields below."); return; }
+        if (d.error) { renderStatus("Lookup unavailable."); showManual(); return; }
         render(d.suggestions || []);
       })
       .catch(function () { if (seq === acSeq) closeList(); });
   }
 
   $("street").addEventListener("input", function () {
+    if (resolved) invalidate();      // text changed: the old parts no longer apply
     clearTimeout(acTimer);
     acTimer = setTimeout(suggest, 250);
   });
@@ -294,17 +306,11 @@
   }
 
   /* ---- deeplink ----------------------------------------------------------- */
-  function fields() {
-    return {
-      street1: $("street").value.trim(),
-      city: $("city").value.trim(),
-      state: $("state").value.trim().toUpperCase(),
-      postalCode: $("zip").value.trim()
-    };
-  }
-
   function deeplink() {
-    var f = fields();
+    var f = resolved || {
+      street1: $("street").value.trim(), city: $("city").value.trim(),
+      state: $("state").value.trim().toUpperCase(), postalCode: $("zip").value.trim()
+    };
     var q = new URLSearchParams();
     // Roofle's parameter names, in their documented order.
     q.set("street1", f.street1);
@@ -315,43 +321,83 @@
   }
 
   function preview() {
-    $("preview").textContent = slug() ? deeplink() : "— set a slug above —";
+    if (!slug()) { $("preview").textContent = "— set a slug above —"; return; }
+    $("preview").textContent = resolved ? deeplink() : "— address not resolved yet —";
   }
-  ["street", "city", "state", "zip"].forEach(function (id) {
-    $(id).addEventListener("input", preview);
+
+  /* ---- resolution ---------------------------------------------------------
+     The visible field is one line. Roofle still needs four parts, so a street
+     string is only "resolved" once we have all four — from a suggestion, from
+     a pasted address that parses, or from the manual fields if we had to show
+     them. Editing the street text after resolving invalidates it, so a stale
+     ZIP can never ride along with a different address. */
+  var resolved = null;
+
+  function markResolved(parts) {
+    resolved = parts;
+    $("city").value = parts.city;
+    $("state").value = parts.state;
+    $("zip").value = parts.postalCode;
+    $("street-hint").textContent = parts.city + ", " + parts.state + " " + parts.postalCode;
+    $("manual").hidden = true;
+    preview();
+  }
+
+  function invalidate() {
+    resolved = null;
+    $("street-hint").textContent = "Pick your address from the list.";
+    preview();
+  }
+
+  function showManual() {
+    $("manual").hidden = false;
+    $("street-hint").textContent = "Pick your address from the list.";
+  }
+
+  // Manual entry counts as resolved too, once all three are filled sensibly.
+  function fromManual() {
+    var city = $("city").value.trim();
+    var state = $("state").value.trim().toUpperCase();
+    var zip = $("zip").value.trim();
+    if (!city || STATES.indexOf(state) === -1 || !/^\d{5}(-\d{4})?$/.test(zip)) return null;
+    return { street1: $("street").value.trim(), city: city, state: state, postalCode: zip };
+  }
+  ["city", "state", "zip"].forEach(function (id) {
+    $(id).addEventListener("input", function () {
+      var m = fromManual();
+      if (m) { resolved = m; }
+      preview();
+    });
   });
 
   /* ---- submit -------------------------------------------------------------- */
-  function fail(msg, focusId) {
+  function fail(msg) {
     $("err").textContent = msg;
     $("err").classList.add("on");
-    if (focusId) { $(focusId).classList.add("bad"); $(focusId).focus(); }
     return false;
   }
 
   $("f").addEventListener("submit", function (e) {
     e.preventDefault();
     $("err").classList.remove("on");
-    ["street", "city", "state", "zip"].forEach(function (id) { $(id).classList.remove("bad"); });
 
-    trySplit();
-    var f = fields();
-    if (!f.street1) return fail("Please enter the street address.", "street");
-    if (!f.city) return fail("Please add the city.", "city");
-    if (!/^[A-Z]{2}$/.test(f.state) || STATES.indexOf(f.state) === -1)
-      return fail("Please use a two-letter state, like FL.", "state");
-    // Roofle will not run the lookup without a ZIP, so catch it here rather
-    // than bounce the visitor into a dead end on their side.
-    if (!/^\d{5}(-\d{4})?$/.test(f.postalCode))
-      return fail("Please add a 5-digit ZIP code.", "zip");
+    if (!$("street").value.trim()) { $("street").focus(); return fail("Please enter your address."); }
+
+    // Last chance: a pasted address that was never blurred, or manual fields.
+    if (!resolved) { trySplit(); }
+    if (!resolved) { resolved = fromManual(); }
+    if (!resolved) {
+      showManual();
+      $("city").focus();
+      return fail("We need the city, state and ZIP to look that address up.");
+    }
     if (!slug()) return fail("No Roofle slug configured yet.");
 
+    var f = resolved;
     var url = deeplink();
     $("go").disabled = true;
-    $("go").textContent = "Measuring your roof…";
+    $("go").textContent = "Working\u2026";
 
-    // Log our side first so the gap to Roofle's own Address Only webhook is
-    // measurable, but never let it delay or block the hand-off.
     var done = false;
     function handoff() { if (!done) { done = true; location.href = url; } }
     try {
