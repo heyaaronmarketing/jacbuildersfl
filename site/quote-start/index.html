@@ -54,6 +54,16 @@
   @media (max-width:520px){.parts{grid-template-columns:1fr 1fr;}.parts .city{grid-column:1/-1}}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);
            white-space:nowrap}
+  .result{margin-top:16px;border:1px solid var(--line);border-radius:10px;
+          background:var(--bg-alt);padding:16px}
+  .result__ok{margin:0 0 6px;font-weight:700;color:var(--ink);font-size:.98rem}
+  .result__msg{margin:0;font-size:.88rem;color:#5c636c}
+  .result__btns{margin-top:12px}
+  .btn-sm{display:inline-block;background:var(--ink);color:#fff;text-decoration:none;
+          font-weight:700;font-size:.88rem;padding:11px 18px;border-radius:8px}
+  .btn-sm:hover{background:#2a2d33}
+  #result-url{display:block;margin-top:10px;font-size:.73rem;color:#7b828b;word-break:break-all;
+              font-family:ui-monospace,Menlo,Consolas,monospace;line-height:1.5}
   .err{color:var(--bad);font-size:.85rem;margin-top:10px;display:none}
   .err.on{display:block}
   input.bad{border-color:var(--bad)}
@@ -136,6 +146,17 @@
       </div>
 
       <p class="err" id="err"></p>
+
+      <div id="result" hidden>
+        <div class="result">
+          <p class="result__ok" id="result-addr"></p>
+          <p class="result__msg" id="result-msg"></p>
+          <div class="result__btns">
+            <a id="result-go" class="btn-sm" href="#" target="_blank" rel="noopener">Open the Roofle demo with this address</a>
+          </div>
+          <code id="result-url"></code>
+        </div>
+      </div>
 
       <ul class="reassure">
         <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg> Free, no obligation</li>
@@ -297,7 +318,6 @@
 
   function paintSlug() {
     var s = slug();
-    $("go").disabled = !s;
     $("slugstate").innerHTML = s
       ? '<span style="color:#5CB85C">Slug set: <b>' + esc(s) + "</b></span>" +
         (slugFromWorker && s === slugFromWorker ? " (from the Worker)" : " (this browser only)")
@@ -306,18 +326,24 @@
   }
 
   /* ---- deeplink ----------------------------------------------------------- */
+  // Roofle's parameter names, in their documented order. One builder so the
+  // demo URL and the real one can never drift apart.
+  function params(f) {
+    var q = new URLSearchParams();
+    q.set("street1", f.street1);
+    q.set("city", f.city);
+    q.set("state", f.state);
+    q.set("postalCode", f.postalCode);
+    return q;
+  }
+
   function deeplink() {
     var f = resolved || {
       street1: $("street").value.trim(), city: $("city").value.trim(),
       state: $("state").value.trim().toUpperCase(), postalCode: $("zip").value.trim()
     };
-    var q = new URLSearchParams();
-    // Roofle's parameter names, in their documented order.
-    q.set("street1", f.street1);
-    q.set("city", f.city);
-    q.set("state", f.state);
-    q.set("postalCode", f.postalCode);
-    return "https://offers.roofle.com/rqp/" + encodeURIComponent(slug()) + "?" + q.toString();
+    return "https://offers.roofle.com/rqp/" + encodeURIComponent(slug()) + "?" +
+           params(f).toString();
   }
 
   function preview() {
@@ -352,6 +378,7 @@
       $("city").value = ""; $("state").value = ""; $("zip").value = "";
     }
     $("street-hint").textContent = "Pick your address from the list.";
+    $("result").hidden = true;
     preview();
   }
 
@@ -400,15 +427,31 @@
       $("city").focus();
       return fail("We need the city, state and ZIP to look that address up.");
     }
-    if (!slug()) return fail("No Roofle slug configured yet.");
-
     var f = resolved;
+    var haveSlug = !!slug();
     var url = deeplink();
-    $("go").disabled = true;
-    $("go").textContent = "Working\u2026";
+
+    if (haveSlug) {
+      $("go").disabled = true;
+      $("go").textContent = "Working\u2026";
+    } else {
+      // No slug yet. The capture half still works and is worth showing, rather
+      // than leaving a click that does nothing.
+      var demo = "https://offers.roofle.com/rqp/demo?" + params(f).toString();
+      $("result-addr").textContent = "Address captured: " + f.street1 + ", " +
+        f.city + ", " + f.state + " " + f.postalCode;
+      $("result-msg").innerHTML =
+        "Logged on our side \u2014 it will show in <a href=\"/roofle-lab/\">the lab</a>. " +
+        "The hand-off to Roofle needs your hosted-page slug, which isn't set yet. " +
+        "Paste it in the test panel below and this button will go straight through.";
+      $("result-go").href = demo;
+      $("result-url").textContent = demo;
+      $("result").hidden = false;
+      $("result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
 
     var done = false;
-    function handoff() { if (!done) { done = true; location.href = url; } }
+    function handoff() { if (!haveSlug || done) return; done = true; location.href = url; }
     try {
       fetch("/api/quote/start", {
         method: "POST",
