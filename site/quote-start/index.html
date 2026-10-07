@@ -328,13 +328,18 @@
   /* ---- deeplink ----------------------------------------------------------- */
   // Roofle's parameter names, in their documented order. One builder so the
   // demo URL and the real one can never drift apart.
+  //
+  // Built by hand rather than with URLSearchParams: that encodes a space as
+  // "+", and Roofle's parser reads "+" literally, so "400+North+Tampa+Street"
+  // never matches an address. Their own documented examples use %20, which is
+  // what encodeURIComponent produces.
   function params(f) {
-    var q = new URLSearchParams();
-    q.set("street1", f.street1);
-    q.set("city", f.city);
-    q.set("state", f.state);
-    q.set("postalCode", f.postalCode);
-    return q;
+    return [
+      "street1=" + encodeURIComponent(f.street1),
+      "city=" + encodeURIComponent(f.city),
+      "state=" + encodeURIComponent(f.state),
+      "postalCode=" + encodeURIComponent(f.postalCode)
+    ].join("&");
   }
 
   function deeplink() {
@@ -343,7 +348,7 @@
       state: $("state").value.trim().toUpperCase(), postalCode: $("zip").value.trim()
     };
     return "https://offers.roofle.com/rqp/" + encodeURIComponent(slug()) + "?" +
-           params(f).toString();
+           params(f);
   }
 
   function preview() {
@@ -437,7 +442,7 @@
     } else {
       // No slug yet. The capture half still works and is worth showing, rather
       // than leaving a click that does nothing.
-      var demo = "https://offers.roofle.com/rqp/demo?" + params(f).toString();
+      var demo = "https://offers.roofle.com/rqp/demo?" + params(f);
       $("result-addr").textContent = "Address captured: " + f.street1 + ", " +
         f.city + ", " + f.state + " " + f.postalCode;
       $("result-msg").innerHTML =
