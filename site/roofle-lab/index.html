@@ -111,9 +111,7 @@ npx wrangler secret put ROOFLE_WEBHOOK_SECRET --name jacbuildersfl</pre>
   <div class="panel">
     <h2>Send a test delivery</h2>
     <p class="note" style="margin:0 0 10px">
-      <strong>This shape is a placeholder, not Roofle's documented payload</strong> &mdash;
-      they don't publish one. It exists so you can exercise the plumbing before Roofle is
-      wired up. Once a real delivery lands below, copy its actual shape from the log.</p>
+      This is Roofle's <strong>documented <code>Contact Form Completed</code> payload</strong>, from their webhooks spec (last updated 4/14/2025), with JAC values swapped in. Two other types exist &mdash; <code>Address Only</code> and <code>Product Requested</code> &mdash; and each is a separate webhook URL in the portal.</p>
     <textarea id="body" spellcheck="false"></textarea>
     <div class="row" style="margin-top:10px">
       <button id="send">Send test</button>
@@ -146,16 +144,7 @@ npx wrangler secret put ROOFLE_WEBHOOK_SECRET --name jacbuildersfl</pre>
   var timer = null;
 
   $("cb").value = CALLBACK;
-  $("body").value = JSON.stringify({
-    event: "lead.created",
-    lead: {
-      firstName: "Test", lastName: "Homeowner",
-      email: "test@example.com", phone: "813-555-0142",
-      address: "123 Bayshore Blvd, Tampa, FL 33606"
-    },
-    quote: { total: 18450, currency: "USD", product: "Owens Corning Duration" },
-    source: "roofle-lab"
-  }, null, 2);
+  $("body").value = "{\n  \"webhookType\": \"Contact Form Completed\",\n  \"firstName\": \"Joe\",\n  \"lastName\": \"Roofer\",\n  \"email\": \"help@roofle.com\",\n  \"phone\": \"(813) 555-0142\",\n  \"address\": \"123 Bayshore Blvd, Tampa, Florida 33606\",\n  \"fullAddress\": \"123 Bayshore Blvd, Tampa, Florida 33606\",\n  \"street\": \"123 Bayshore Blvd\",\n  \"city\": \"Tampa\",\n  \"state\": \"Florida\",\n  \"zip\": \"33606\",\n  \"country\": \"USA\",\n  \"market\": \"Tampa-St. Petersburg, FL\",\n  \"externalUrl\": \"https://www.jacbuildersfl.com/instant-quote/\",\n  \"timestamp\": \"2026-10-07T16:48:22.193Z\",\n  \"jobId\": \"RQP_100123\",\n  \"leadId\": 123,\n  \"repName\": \"Joe Roofer\",\n  \"repEmail\": \"joe@jacbuildersfl.com\",\n  \"numberOfStructures\": 1,\n  \"numberOfIncludedStructures\": 1,\n  \"totalSquareFeet\": 2410,\n  \"totalInitialSquareFeet\": 2410,\n  \"mainRoofTotalSquareFeet\": 2410,\n  \"sessionId\": \"nH9YvHwoBldl2ZkpQSWrX\",\n  \"structures\": [\n    {\n      \"name\": \"Main Roof\",\n      \"slope\": \"medium\",\n      \"isIncluded\": true,\n      \"squareFeet\": 2410,\n      \"initialSquareFeet\": 2410,\n      \"roofComplexity\": \"Simple\"\n    }\n  ],\n  \"products\": [\n    {\n      \"name\": \"Owens Corning Duration\",\n      \"id\": 1,\n      \"doNotOverrideWasteFactor\": false,\n      \"wasteFactorValue\": 1.12,\n      \"wasteFactorMainRoof\": 1.2,\n      \"priceInfo\": {\n        \"priceType\": \"BasicFinancing\",\n        \"total\": 18450.5,\n        \"pricePerSquare\": 401,\n        \"monthly\": 334,\n        \"apr\": 26.1,\n        \"months\": 180\n      },\n      \"priceRange\": {\n        \"totalMin\": 16562,\n        \"totalMax\": 20575,\n        \"monthlyMin\": 300,\n        \"monthlyMax\": 367\n      }\n    }\n  ],\n  \"communicationOptions\": {\n    \"contactOptIn\": true,\n    \"smsOptIn\": false\n  },\n  \"weatherReports\": [\n    {\n      \"datecode\": \"230504\",\n      \"hailSize\": 1.5,\n      \"distance\": 4.21\n    }\n  ]\n}";
 
   $("copy").addEventListener("click", function () {
     navigator.clipboard.writeText(CALLBACK).then(function () {

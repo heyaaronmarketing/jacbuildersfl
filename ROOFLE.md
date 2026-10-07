@@ -31,6 +31,78 @@ cutover, deliveries will go to WordPress and be lost.
 The endpoint answers 200 *before* writing anything, because a slow 200 invites
 retries and a storage failure must never read as a failed delivery.
 
+## The full API surface (verified 2026-10-07)
+
+Four distinct capabilities, and only one of them is an API you call:
+
+| Surface | Direction | What it gives you |
+|---|---|---|
+| Script embeds | — | The widget. Keyed by a public tool ID. |
+| `postMessage` events | Roofle → page | 7 in-page funnel events, analytics only |
+| **Webhooks** | Roofle → you | Full lead + quote data. **The real integration.** |
+| **Deeplinks** | you → Roofle | Prefill address/contact/rep via URL params |
+| CRM connectors | Roofle → vendor | JobNimbus, ProLine, AccuLynx, SalesRabbit, Leap, RoofLink, Zapier |
+
+There is **no public REST API**. The app's own backends
+(`gateway-api.app.roofle.com`, `api.app.roofle.com`) answer 404 on every
+documented-spec path and authenticate through SalesRabbit SSO — they are
+internal, unsupported, and not something to build on.
+
+### Deeplinks — how to run your own form
+
+This is the part that answers "I want more control". You can build any form you
+like and hand off to Roofle with the fields already filled:
+
+```
+https://offers.roofle.com/rqp/<your-slug>?street1=123%20Bayshore%20Blvd&city=Tampa&state=FL&postalCode=33606&firstName=Joe&lastName=Roofer&phone=8135550142&email=joe@example.com&rep=joe@jacbuildersfl.com
+```
+
+`postalCode` is required for the address lookup; `firstName`, `lastName`,
+`phone`, `email` are optional; `rep` assigns the lead to a sales rep by email.
+JAC's slug is not `Ia1SS2XzahX7CnVfYGzn7` (that is the widget tool ID) — find
+the hosted-page slug in the Pro Portal.
+
+### Webhook types
+
+Three separate webhook URLs, configured individually in Settings → Developer →
+Webhooks. Each posts JSON and is discriminated by a `webhookType` field:
+
+| Portal type | `webhookType` value | Fires when |
+|---|---|---|
+| Address Only | `Address Only` | an address is submitted |
+| Contact Form Completed | `Contact Form Completed` | **a lead converts** |
+| Product Requested | `Product Requested` | a specific product is requested |
+
+`Address Only` is deliberately thin — `address`, `externalUrl`, `sessionId`.
+`Contact Form Completed` and `Product Requested` both carry the full shared
+block:
+
+- **Contact** — `firstName`, `lastName`, `email`, `phone`
+- **Address** — `address`, `fullAddress`, `street`, `city`, `state`, `zip`,
+  `country`, `market`
+- **Measurements** — `totalSquareFeet`, `totalInitialSquareFeet`,
+  `mainRoofTotalSquareFeet`, `numberOfStructures`,
+  `numberOfIncludedStructures`, `structures[]`
+  (`name`, `slope`, `isIncluded`, `squareFeet`, `initialSquareFeet`,
+  `roofComplexity`)
+- **Pricing** — `products[]` with `priceInfo`
+  (`priceType`, `total`, `pricePerSquare`, `monthly`, `apr`, `months`) and
+  `priceRange` (`totalMin/Max`, `monthlyMin/Max`)
+- **Storm** — `weatherReports[]` (`datecode` YYMMDD, `hailSize` in inches,
+  `distance`)
+- **Attribution** — `externalUrl`, `sessionId`, `timestamp`, `jobId`, `leadId`
+- **Consent** — `communicationOptions.contactOptIn`, `.smsOptIn` (nested, not
+  top-level)
+- **CRM echoes** — `jobNimbusJobId`, `leapJobId`, `roofLinkJobId`
+
+Two things worth noting: `weatherReports[]` means **hail history arrives with
+every lead**, which is a storm-campaign trigger sitting in the payload for
+free. And `communicationOptions.smsOptIn` is the consent record — it governs
+whether you may legally text that person, so it should be stored, not dropped.
+
+Source: Roofle's own OpenAPI spec at roofquotepro.com/webhooks-documentation
+(last updated 4/14/2025), read from the page bundle.
+
 ## Lab
 
 `/roofle-lab/` (noindex) shows what actually arrives: full payload, headers,

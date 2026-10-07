@@ -178,8 +178,9 @@ async function handleWebhook(request, url, env, ctx) {
     verifiedBy,
     source: request.headers.get('cf-connecting-ip') || 'unknown',
     contentType,
-    // Roofle's own in-page events use `event`; mirror that if the body has one.
-    event: (payload && (payload.event || payload.type || payload.eventType)) || 'webhook',
+    // Roofle's discriminator is `webhookType` ("Address Only" | "Contact Form
+    // Completed" | "Product Requested"); the rest are fallbacks for test posts.
+    event: (payload && (payload.webhookType || payload.event || payload.type)) || 'webhook',
     payload,
     headers: Object.fromEntries(
       [...request.headers].filter(([k]) => !/^(cookie|authorization)$/i.test(k))
