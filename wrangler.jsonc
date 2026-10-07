@@ -20,5 +20,10 @@
   //     "database_id": "PASTE-ID-HERE"
   //   }
   // ],
+  // Roofle hosted-page slug for deeplinks (offers.roofle.com/rqp/<slug>).
+  // Not a secret — it is visible in the URL we send people to. Empty until the
+  // real one is read out of the Pro Portal; the form refuses to hand off
+  // without it rather than send real addresses to Roofle's demo account.
+  "vars": { "ROOFLE_OFFERS_SLUG": "" },
   "observability": { "enabled": true }
 }

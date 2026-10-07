@@ -1,6 +1,8 @@
 /**
  * jacbuildersfl.com — site worker.
  *
+ *   GET    /api/geo/suggest      Address autocomplete, proxied. See worker/geo.js
+ *   POST   /api/quote/start      Our own address form -> logged, then handed to Roofle.
  *   POST   /api/roofle/webhook   Roofle callback URL. Always answers 200 fast.
  *   GET    /api/roofle/events    Recent deliveries. Gated by ROOFLE_LAB_TOKEN.
  *   POST   /api/roofle/test      Inject a synthetic delivery. Gated.
@@ -15,6 +17,8 @@
  * reports which store is active so nobody mistakes the scratch buffer for a
  * durable record. See ROOFLE.md for the one command that upgrades it.
  */
+
+import { handleSuggest } from './geo.js';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
 const MAX_BODY = 64 * 1024;   // a lead payload is a few KB; this is a spam cap
@@ -209,6 +213,10 @@ export default {
         storage: env.DB ? 'd1' : 'memory (ephemeral — no D1 binding)',
         labTokenConfigured: !!env.ROOFLE_LAB_TOKEN,
         webhookSecretConfigured: !!env.ROOFLE_WEBHOOK_SECRET,
+        // Public: it appears in the deeplink URL. Empty until the real hosted
+        // page slug is read out of the Pro Portal.
+        offersSlug: env.ROOFLE_OFFERS_SLUG || null,
+        geoProvider: env.GOOGLE_PLACES_API_KEY ? 'google' : 'photon',
       });
     }
 
@@ -219,6 +227,33 @@ export default {
       }
       if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
       return handleWebhook(request, url, env, ctx);
+    }
+
+    if (path === '/api/geo/suggest' && request.method === 'GET') {
+      return handleSuggest(request, url, env);
+    }
+
+    // Our own address form. Logged before the hand-off so the gap between
+    // "submitted our form" and Roofle's own "Address Only" webhook is
+    // measurable — that gap is the drop-off at the hand-off itself.
+    if (path === '/api/quote/start' && request.method === 'POST') {
+      const { contentType, payload, tooLarge } = await readBody(request);
+      if (tooLarge) return json({ ok: false, error: 'payload_too_large' }, 413);
+      const row = {
+        id: crypto.randomUUID(),
+        at: new Date().toISOString(),
+        verified: true,
+        verifiedBy: 'own-form',
+        source: request.headers.get('cf-connecting-ip') || 'unknown',
+        contentType,
+        event: 'Form Address Submitted',
+        payload,
+        headers: {},
+      };
+      ctx.waitUntil(
+        putEvent(env, row).catch((e) => console.error('quote start store failed', e.message))
+      );
+      return json({ ok: true, id: row.id });
     }
 
     if (path === '/api/roofle/events') {
