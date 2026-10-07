@@ -82,6 +82,36 @@ Two details worth keeping in mind when editing it:
   removed all form-less popups and broke booking, because 3011's form hydrates
   late. Never reintroduce a rule that matches popups by absence of a `<form>`.
 
+## Roofle (RoofQuote PRO) instant-quote page
+
+`site/instant-quote/` is a purpose-built, Elementor-free landing page wrapping
+Roofle's **embedded** widget, built to Roofle's own landing-page guidance:
+address-first above the fold, trust row beside the tool, FAQ below, and two
+honest CTAs (instant quote vs. call for a leak/storm inspection). It is
+`noindex,follow` so it does not compete with /instant-estimations/ and
+/inspection-estimate-instant/ for the same terms — it is built for paid traffic.
+
+**There is no inbound Roofle REST API.** The developer surface is: two script
+embeds keyed by a public company tool ID, `postMessage` events for analytics,
+outbound webhooks, and direct CRM integrations. You cannot POST form fields to
+Roofle and get a quote back — the widget *is* the quote engine. The page
+therefore tracks the widget rather than replacing it.
+
+The page listens for the seven documented events and pushes them to
+`dataLayer`, forwards to `gtag` if present, and fires a Meta `Lead` only on
+`Contact-form-submitted`. It also stashes `utm_*`/`gclid`/`fbclid` in
+`sessionStorage` on arrival, since Roofle owns the lead form and a converted
+lead otherwise arrives with no campaign attribution.
+
+Two things worth knowing if you touch it:
+
+- **`Roof-quote-pro-viewed` fires even when the widget is then refused** and
+  renders nothing, so the "did it load?" fallback is based on whether the mount
+  node actually has children, not on that event.
+- **Roofle enforces a domain whitelist and answers 403 from any host not on
+  it.** Every non-production host (workers.dev, localhost) needs adding in the
+  Pro Portal or the widget will never render.
+
 ## Deliberately left as-is
 
 Third-party phone-home is untouched (GA4, Google Ads, Facebook Pixel, Owens

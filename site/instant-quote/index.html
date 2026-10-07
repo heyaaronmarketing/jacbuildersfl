@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instant Roof Quote – Just Enter Your Address | JAC Builders</title>
+<meta name="description" content="See your roof replacement price in about 60 seconds. Enter your address, pick your shingle, get a real number — no phone call, no sales visit required.">
+<!-- Built for paid traffic. Kept out of the index so it does not compete with
+     /instant-estimations/ and /inspection-estimate-instant/ for the same terms. -->
+<meta name="robots" content="noindex,follow">
+<link rel="canonical" href="https://www.jacbuildersfl.com/instant-quote/">
+<meta property="og:title" content="Instant Roof Quote – Just Enter Your Address | JAC Builders">
+<meta property="og:description" content="See your roof replacement price in about 60 seconds. No phone call, no sales visit required.">
+<meta property="og:url" content="https://www.jacbuildersfl.com/instant-quote/">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://app.roofle.com" crossorigin>
+<link rel="stylesheet" href="/wp-content/uploads/elementor/google-fonts/css/poppins.css">
+<style>
+  /* Brand: gold #D9BB71 on near-black, white surfaces. Three colours plus
+     neutrals, per Roofle's high-contrast guidance. */
+  :root{
+    --gold:#D9BB71; --gold-dark:#c3a65d;
+    --ink:#121316; --ink-soft:#2a2d33;
+    --body:#4a5058; --line:#e4e6ea; --bg:#fff; --bg-alt:#f7f7f5;
+    --wrap:1120px; --radius:14px;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--body);
+    font:16px/1.65 Poppins,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{color:var(--ink);line-height:1.15;margin:0 0 .5em;font-weight:700;letter-spacing:-.015em}
+  h1{font-size:clamp(2rem,4.6vw,3.3rem)}
+  h2{font-size:clamp(1.5rem,2.8vw,2.1rem)}
+  h3{font-size:1.07rem;margin-bottom:.35em}
+  p{margin:0 0 1em}
+  a{color:inherit}
+  .wrap{width:100%;max-width:var(--wrap);margin:0 auto;padding:0 20px}
+  .skip{position:absolute;left:-9999px}
+  .skip:focus{left:8px;top:8px;z-index:50;background:#fff;padding:10px 16px;border-radius:8px}
+
+  /* --- header: logo + phone only. No nav — nothing to click away with. ----- */
+  .hdr{background:var(--ink);position:sticky;top:0;z-index:30}
+  .hdr__in{display:flex;align-items:center;justify-content:space-between;gap:16px;
+           min-height:68px;padding-top:10px;padding-bottom:10px}
+  .hdr__logo img{display:block;height:45px;width:auto}
+  .hdr__tel{
+    display:inline-flex;align-items:center;gap:8px;white-space:nowrap;
+    color:var(--ink);background:var(--gold);text-decoration:none;
+    font-weight:700;font-size:.95rem;padding:11px 18px;border-radius:999px;
+  }
+  .hdr__tel:hover{background:var(--gold-dark)}
+
+  /* --- hero ---------------------------------------------------------------- */
+  .hero{background:var(--ink);color:#d7dbe0;padding:clamp(34px,5vw,60px) 0 clamp(26px,4vw,40px)}
+  .hero h1{color:#fff;max-width:17ch}
+  .hero__lede{font-size:clamp(1.02rem,1.5vw,1.17rem);max-width:56ch;margin-bottom:1.3em}
+  .hero__lede strong{color:#fff}
+  .eyebrow{
+    display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--gold);margin-bottom:14px;
+  }
+  .trust{display:flex;flex-wrap:wrap;gap:10px 22px;list-style:none;margin:0;padding:0;
+         font-size:.88rem;font-weight:600;color:#fff}
+  .trust li{display:flex;align-items:center;gap:8px}
+  .trust svg{flex:none;width:17px;height:17px;color:var(--gold)}
+
+  /* --- the widget: the whole point of the page ----------------------------- */
+  .quote{background:var(--ink);padding-bottom:clamp(38px,5vw,64px)}
+  .quote__card{background:#fff;border-radius:var(--radius);padding:clamp(18px,2.6vw,30px);
+               box-shadow:0 18px 44px rgba(0,0,0,.26)}
+  .quote__head{text-align:center;margin-bottom:18px}
+  .quote__head h2{font-size:clamp(1.25rem,2.3vw,1.7rem);margin-bottom:.25em}
+  .quote__head p{margin:0;font-size:.95rem}
+  /* Reserve height so the page does not jump when the widget mounts. */
+  #roof-quote{min-height:560px}
+  @media (max-width:640px){#roof-quote{min-height:620px}}
+  .quote__fallback{
+    display:none;border:1px dashed var(--line);border-radius:10px;
+    padding:26px 20px;text-align:center;background:var(--bg-alt);
+  }
+  .quote__fallback p{margin:0 0 14px;font-size:.95rem}
+  .quote--failed #roof-quote{display:none}
+  .quote--failed .quote__fallback{display:block}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:9px;
+    min-height:52px;padding:14px 28px;border-radius:999px;border:0;cursor:pointer;
+    font:700 1rem/1 Poppins,system-ui,sans-serif;text-decoration:none;
+    background:var(--gold);color:var(--ink);
+  }
+  .btn:hover{background:var(--gold-dark)}
+  .btn--ghost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+  .btn--ghost:hover{background:var(--ink);color:#fff}
+
+  /* --- content sections ---------------------------------------------------- */
+  section{padding:clamp(40px,5.5vw,70px) 0}
+  .alt{background:var(--bg-alt)}
+  .lede{max-width:62ch;margin-bottom:34px}
+  .steps{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+         list-style:none;margin:0;padding:0;counter-reset:s}
+  .steps li{counter-increment:s;background:#fff;border:1px solid var(--line);
+            border-radius:var(--radius);padding:24px}
+  .steps li::before{
+    content:counter(s);display:grid;place-items:center;width:38px;height:38px;
+    border-radius:50%;background:var(--gold);color:var(--ink);
+    font-weight:700;font-size:1rem;margin-bottom:14px;
+  }
+  .steps p{margin:0;font-size:.94rem}
+
+  .faq{max-width:780px}
+  .faq details{border-bottom:1px solid var(--line);padding:4px 0}
+  .faq summary{
+    cursor:pointer;list-style:none;padding:16px 36px 16px 0;position:relative;
+    font-weight:600;color:var(--ink);font-size:1.02rem;
+  }
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::after{
+    content:"";position:absolute;right:8px;top:50%;width:9px;height:9px;
+    border-right:2px solid var(--body);border-bottom:2px solid var(--body);
+    transform:translateY(-70%) rotate(45deg);
+  }
+  .faq details[open] summary::after{transform:translateY(-30%) rotate(225deg)}
+  .faq details p{margin:0 0 16px;font-size:.96rem}
+
+  /* Honest second path: a quote is not the same ask as an inspection. */
+  .split{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+         margin-top:8px}
+  .split > div{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:26px}
+  .split p{font-size:.94rem}
+
+  .ftr{background:var(--ink);color:#9aa1ab;font-size:.85rem;padding:30px 0}
+  .ftr a{color:#cfd4da}
+  .ftr__in{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<script>(function(){var m;try{m=localStorage.getItem("jacUxMode")}catch(e){}if(m!=="before"){document.documentElement.className+=" tighten-on"}})();</script>
+<link rel="stylesheet" href="/assets/tighten.css?v=1">
+</head>
+<body>
+<a class="skip" href="#roof-quote">Skip to the instant quote tool</a>
+
+<header class="hdr">
+  <div class="wrap hdr__in">
+    <a class="hdr__logo" href="/" aria-label="JAC Builders home">
+      <img src="/wp-content/uploads/2024/09/image_1-removebg-preview-1.svg" alt="JAC Builders" width="148" height="45">
+    </a>
+    <a class="hdr__tel" href="tel:+18139209644" data-cta="header-call">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.58 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.4 11.4 0 0 0 .57 3.6 1 1 0 0 1-.25 1z"/></svg>
+      (813) 920-9644
+    </a>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="wrap">
+      <span class="eyebrow">Free &middot; No obligation</span>
+      <h1>See your new roof price in about 60 seconds</h1>
+      <p class="hero__lede">
+        Enter your address and our tool measures your roof from aerial imagery,
+        then shows you real pricing on real shingles.
+        <strong>No phone call, no sales visit, no waiting on a callback.</strong>
+      </p>
+      <ul class="trust">
+        <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg> 5-Star Google Guaranteed</li>
+        <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg> BBB Accredited &amp; A Rated</li>
+        <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg> Owens Corning Preferred Contractor</li>
+        <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg> Licensed &amp; insured in Florida</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="quote" id="quote">
+    <div class="wrap">
+      <div class="quote__card">
+        <div class="quote__head">
+          <h2>Instant roof quote &mdash; just enter your address</h2>
+          <p>Takes about a minute. You'll see your pricing on screen before anyone contacts you.</p>
+        </div>
+        <!-- RoofQuote PRO embedded widget mounts here. -->
+        <div id="roof-quote"></div>
+        <div class="quote__fallback">
+          <p><strong>The instant quote tool didn't load.</strong> It may be blocked by a
+             browser extension or a slow connection &mdash; we can still get you a price today.</p>
+          <a class="btn" href="tel:+18139209644" data-cta="fallback-call">Call (813) 920-9644</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <h2>How it works</h2>
+      <p class="lede">Three steps, and you stay in control of every one of them.</p>
+      <ol class="steps">
+        <li>
+          <h3>Enter your address</h3>
+          <p>We pull up your home and measure the roof from current aerial imagery &mdash;
+             no one has to climb on it to give you a number.</p>
+        </li>
+        <li>
+          <h3>Pick your shingle</h3>
+          <p>Compare real products at real prices, including Owens Corning lines we're
+             a Preferred Contractor for. Change the selection and the price updates.</p>
+        </li>
+        <li>
+          <h3>Get it in writing</h3>
+          <p>Save your quote and we'll follow up to confirm the details. Financing options
+             are available if you want to spread the cost.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap faq">
+      <h2>Straight answers</h2>
+      <p class="lede">The questions homeowners ask before they'll type in an address.</p>
+
+      <details open>
+        <summary>Is the price real, or a teaser that changes later?</summary>
+        <p>It's a real estimate built from your actual roof measurements and current
+           material pricing. We confirm it with an inspection before any work is scheduled &mdash;
+           if something on your roof changes the scope, like hidden decking damage,
+           we'll show you exactly what and why before you commit to anything.</p>
+      </details>
+      <details>
+        <summary>Do I have to talk to a salesperson to see my price?</summary>
+        <p>No. The price appears on screen. You choose whether to go further.</p>
+      </details>
+      <details>
+        <summary>Will this work for my insurance or storm claim?</summary>
+        <p>It's a useful starting number, but storm and insurance work gets priced from a
+           documented inspection, not aerial imagery alone. Call us and we'll walk the claim
+           with you &mdash; that's a different process from a straight replacement quote.</p>
+      </details>
+      <details>
+        <summary>What areas do you cover?</summary>
+        <p>Tampa Bay, Central Florida and Orlando, and the Gulf Coast. If the tool finds
+           your address, we serve it.</p>
+      </details>
+      <details>
+        <summary>What does it cost to get the quote?</summary>
+        <p>Nothing. There's no fee and no obligation to book.</p>
+      </details>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Not what you were after?</h2>
+      <p class="lede">Two different asks, two different buttons &mdash; so you land where you meant to.</p>
+      <div class="split">
+        <div>
+          <h3>I want a price on a roof replacement</h3>
+          <p>Use the instant quote tool. You'll see pricing before you talk to anyone.</p>
+          <a class="btn" href="#quote" data-cta="bottom-quote">Get my instant quote</a>
+        </div>
+        <div>
+          <h3>I have a leak or storm damage</h3>
+          <p>That needs eyes on the roof, not aerial imagery. Call and we'll get an
+             inspection scheduled.</p>
+          <a class="btn btn--ghost" href="tel:+18139209644" data-cta="bottom-call">Call (813) 920-9644</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="ftr">
+  <div class="wrap ftr__in">
+    <span>&copy; <span id="yr">2026</span> JAC Builders &middot; Licensed &amp; insured Florida roofing contractor</span>
+    <span><a href="/">Main site</a> &middot; <a href="/privacy-policy/">Privacy policy</a></span>
+  </div>
+</footer>
+
+<!-- RoofQuote PRO embedded widget (Roofle). Tool ID is company-specific and
+     public by design; it is the same ID already used across the site. -->
+<script src="https://app.roofle.com/roof-quote-pro-embedded-widget.js?id=Ia1SS2XzahX7CnVfYGzn7" async></script>
+
+<script>
+(function () {
+  "use strict";
+  document.getElementById("yr").textContent = new Date().getFullYear();
+
+  /* --- attribution --------------------------------------------------------
+     Stash ad click IDs on arrival. Roofle owns the lead form, so without this
+     a converted lead arrives with no idea which campaign paid for it. */
+  try {
+    var params = new URLSearchParams(location.search);
+    ["utm_source","utm_medium","utm_campaign","utm_term","utm_content",
+     "gclid","fbclid","ttclid","msclkid"].forEach(function (k) {
+      if (params.has(k)) sessionStorage.setItem(k, params.get(k));
+    });
+    if (!sessionStorage.getItem("session_id")) {
+      sessionStorage.setItem("session_id", Math.random().toString(36).slice(2, 11));
+    }
+  } catch (e) {}
+
+  /* --- conversion tracking -------------------------------------------------
+     RoofQuote PRO runs in a cross-origin iframe, so the only way to see what a
+     visitor does inside it is the postMessage events it emits. Event names are
+     Roofle's; the origin check is what stops any other frame spoofing them. */
+  var EVENTS = {
+    "Roof-quote-pro-viewed":      "roofquotepro_viewed",
+    "Address-loaded":             "roofquotepro_address_loaded",
+    "Contact-form-displayed":     "roofquotepro_lead_form_displayed",
+    "Get-help-form-displayed":    "roofquotepro_other_contact_form_displayed",
+    "Get-help-form-submitted":    "roofquotepro_other_contact_submitted",
+    "Contact-form-submitted":     "roofquotepro_lead_submitted",
+    "Product-requested-cta":      "roofquotepro_product_requested"
+  };
+  // The one that means money. Keep the others as funnel steps only.
+  var CONVERSION = "roofquotepro_lead_submitted";
+  var widgetLoaded = false;
+
+  window.dataLayer = window.dataLayer || [];
+
+  window.addEventListener("message", function (event) {
+    if (event.origin.indexOf("app.roofle.com") === -1) return;
+    var raw = event.data && event.data.event;
+    var name = EVENTS[raw];
+    if (!name) return;
+
+    // Only a stage that implies a working UI counts as proof of life — the
+    // "viewed" event fires even when the widget is then refused and renders
+    // nothing, so trusting it would hide the fallback on a dead tool.
+    if (raw !== "Roof-quote-pro-viewed") widgetLoaded = true;
+    window.dataLayer.push({
+      event: name,
+      eventCategory: "RoofQuote PRO",
+      eventAction: name.replace("roofquotepro_", "").replace(/_/g, " "),
+      eventLabel: "Instant quote landing page",
+      widgetType: "embedded"
+    });
+    if (typeof window.gtag === "function") window.gtag("event", name);
+    if (name === CONVERSION && typeof window.fbq === "function") {
+      window.fbq("track", "Lead", { content_name: "RoofQuote PRO instant quote" });
+    }
+  });
+
+  /* --- fallback ------------------------------------------------------------
+     If the widget never reports in, the page would otherwise be a dead end.
+     Roofle enforces a domain whitelist and answers 403 from any host that is
+     not on it, which is exactly the case this catches. */
+  var mount = document.getElementById("roof-quote");
+  setTimeout(function () {
+    if (widgetLoaded) return;
+    if (mount && mount.children.length) return;   // it rendered: good enough
+    document.getElementById("quote").classList.add("quote--failed");
+    window.dataLayer.push({ event: "roofquotepro_failed_to_load" });
+  }, 9000);
+
+  /* Smooth-scroll the bottom CTA back to the tool. */
+  document.querySelectorAll('a[href="#quote"]').forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      e.preventDefault();
+      document.getElementById("quote").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+})();
+</script>
+<script src="/assets/tighten.js?v=1" defer></script>
+</body>
+</html>

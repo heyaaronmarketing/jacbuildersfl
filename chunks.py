@@ -16,7 +16,10 @@ RUNTIMES = {
     "wp-content/plugins/elementor/assets/js": "wp-content/plugins/elementor/assets/js/webpack.runtime.min.js",
     "wp-content/plugins/elementor-pro/assets/js": "wp-content/plugins/elementor-pro/assets/js/webpack-pro.runtime.min.js",
 }
-BUNDLE_RE = re.compile(r'[a-z0-9-]+\.[0-9a-f]{16,}\.bundle\.min\.js')
+# Most chunks are named (nav-menu.<hash>.bundle.min.js) but some are emitted
+# with a bare hash and no name prefix — requiring the prefix silently skipped
+# those, and a missing chunk surfaces only as a runtime ChunkLoadError.
+BUNDLE_RE = re.compile(r'(?:[a-z0-9-]+\.)?[0-9a-f]{16,}\.bundle\.min\.js')
 
 # Named only inside other scripts, never in page markup, so the crawl misses
 # them too. dialog.min.js is what Elementor popups are built on — without it
@@ -25,6 +28,9 @@ EXTRAS = [
     "wp-content/plugins/elementor/assets/lib/dialog/dialog.min.js",
     "wp-includes/js/wp-emoji-release.min.js",
     "wp-content/plugins/elementor-pro/modules/lottie/assets/animations/default.json",
+    # Loaded on demand by the lightbox/share-link handlers, by URLs built in JS.
+    "wp-content/plugins/elementor/assets/lib/share-link/share-link.min.js",
+    "wp-content/uploads/elementor/css/custom-lightbox.min.css",
 ]
 
 
