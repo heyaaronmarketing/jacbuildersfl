@@ -345,6 +345,12 @@
 
   function invalidate() {
     resolved = null;
+    // Clear the parts too, unless the visitor is filling them in by hand.
+    // Leaving a previous pick's ZIP behind lets fromManual() resurrect it
+    // against a different street — a wrong-address quote with no visible cause.
+    if ($("manual").hidden) {
+      $("city").value = ""; $("state").value = ""; $("zip").value = "";
+    }
     $("street-hint").textContent = "Pick your address from the list.";
     preview();
   }
@@ -356,6 +362,9 @@
 
   // Manual entry counts as resolved too, once all three are filled sensibly.
   function fromManual() {
+    // Only authoritative while visible; otherwise these are leftovers from a
+    // previous pick, not something the visitor stands behind.
+    if ($("manual").hidden) return null;
     var city = $("city").value.trim();
     var state = $("state").value.trim().toUpperCase();
     var zip = $("zip").value.trim();
