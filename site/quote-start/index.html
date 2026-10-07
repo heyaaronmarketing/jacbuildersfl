@@ -463,9 +463,22 @@
     if (!resolved) { trySplit(); }
     if (!resolved) { resolved = fromManual(); }
     if (!resolved) {
-      showManual();
-      $("city").focus();
-      return fail("We need the city, state and ZIP to look that address up.");
+      // Hand the raw text to the lookup before asking the visitor to redo work
+      // they have already done. Only if that misses do we show the fields.
+      $("go").disabled = true;
+      $("go").textContent = "Looking it up\u2026";
+      resolveViaLookup($("street").value.trim()).then(function (hit) {
+        $("go").disabled = false;
+        $("go").textContent = "Start";
+        if (hit) {
+          $("f").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+          return;
+        }
+        showManual();
+        $("city").focus();
+        fail("We couldn't find that address. Add the city, state and ZIP and we'll carry on.");
+      });
+      return false;
     }
     var f = resolved;
     var haveSlug = !!slug();
