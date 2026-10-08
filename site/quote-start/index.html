@@ -54,6 +54,10 @@
   @media (max-width:520px){.parts{grid-template-columns:1fr 1fr;}.parts .city{grid-column:1/-1}}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);
            white-space:nowrap}
+  .contact{margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
+  .contact__row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:520px){.contact__row{grid-template-columns:1fr}}
+  .contact label{margin-bottom:6px}
   .result{margin-top:16px;border:1px solid var(--line);border-radius:10px;
           background:var(--bg-alt);padding:16px}
   .result__ok{margin:0 0 6px;font-weight:700;color:var(--ink);font-size:.98rem}
@@ -112,7 +116,8 @@
   <div class="wrap">
     <h1>What's the address?</h1>
     <p class="lede">That's all we need to start. We'll measure the roof from aerial
-       imagery and show you a price &mdash; <strong>no phone call required.</strong></p>
+       imagery and show you a price. <strong>You'll see it on screen first</strong> &mdash;
+       we only use your details to send the estimate and follow up.</p>
 
     <form class="card" id="f" novalidate>
       <label for="street">Property address</label>
@@ -145,6 +150,21 @@
         </div>
       </div>
 
+      <div class="contact">
+        <div class="contact__row">
+          <div>
+            <label for="email">Email</label>
+            <input id="email" type="email" inputmode="email" autocomplete="email"
+                   placeholder="you@example.com" required>
+          </div>
+          <div>
+            <label for="phone">Phone</label>
+            <input id="phone" type="tel" inputmode="tel" autocomplete="tel"
+                   placeholder="(813) 555-0142" required>
+          </div>
+        </div>
+      </div>
+
       <p class="err" id="err"></p>
 
       <div id="result" hidden>
@@ -160,7 +180,7 @@
 
       <ul class="reassure">
         <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg> Free, no obligation</li>
-        <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg> No phone number needed</li>
+        <li><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg> No sales visit to book</li>
       </ul>
     </form>
 
@@ -343,6 +363,32 @@
   }
 
   /* ---- deeplink ----------------------------------------------------------- */
+  /* ---- contact ------------------------------------------------------------ */
+  // Deliberately loose: the only email check worth doing in a browser is
+  // "something@something.something". Anything stricter rejects real addresses.
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+  function digits(v) { return String(v).replace(/\D/g, ""); }
+
+  function contact() {
+    var email = $("email").value.trim();
+    var phoneDigits = digits($("phone").value);
+    // Accept a leading country code but hand Roofle the bare 10 digits.
+    if (phoneDigits.length === 11 && phoneDigits.charAt(0) === "1") {
+      phoneDigits = phoneDigits.slice(1);
+    }
+    return { email: email, phone: phoneDigits };
+  }
+
+  // Light formatting on blur only — reformatting mid-typing fights the caret.
+  $("phone").addEventListener("blur", function () {
+    var d = digits($("phone").value);
+    if (d.length === 11 && d.charAt(0) === "1") d = d.slice(1);
+    if (d.length === 10) {
+      $("phone").value = "(" + d.slice(0, 3) + ") " + d.slice(3, 6) + "-" + d.slice(6);
+    }
+  });
+
   // Roofle's parameter names, in their documented order. One builder so the
   // demo URL and the real one can never drift apart.
   //
@@ -351,12 +397,17 @@
   // never matches an address. Their own documented examples use %20, which is
   // what encodeURIComponent produces.
   function params(f) {
-    return [
+    var c = contact();
+    var out = [
       "street1=" + encodeURIComponent(f.street1),
       "city=" + encodeURIComponent(f.city),
       "state=" + encodeURIComponent(f.state),
       "postalCode=" + encodeURIComponent(f.postalCode)
-    ].join("&");
+    ];
+    // Optional on Roofle's side; prefilling means they are not asked twice.
+    if (c.email) out.push("email=" + encodeURIComponent(c.email));
+    if (c.phone) out.push("phone=" + encodeURIComponent(c.phone));
+    return out.join("&");
   }
 
   function deeplink() {
@@ -452,6 +503,10 @@
 
     if (!$("street").value.trim()) { $("street").focus(); return fail("Please enter your address."); }
 
+    var c = contact();
+    if (!EMAIL_RE.test(c.email)) { $("email").focus(); return fail("Please check your email address."); }
+    if (c.phone.length !== 10) { $("phone").focus(); return fail("Please enter a 10-digit phone number."); }
+
     // Last chance: a pasted address that was never blurred, or manual fields.
     if (!resolved) { trySplit(); }
     if (!resolved) { resolved = fromManual(); }
@@ -510,6 +565,7 @@
         body: JSON.stringify({
           webhookType: "Form Address Submitted",
           street: f.street1, city: f.city, state: f.state, zip: f.postalCode,
+          email: c.email, phone: c.phone,
           fullAddress: f.street1 + ", " + f.city + ", " + f.state + " " + f.postalCode,
           externalUrl: location.href,
           handoffUrl: url,
